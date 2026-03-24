@@ -1,0 +1,57 @@
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g. 1.2.3 — without the "v" prefix)'
+        required: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: write
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Update version in Cargo.toml
+        run: |
+          sed -i 's/^version = "[0-9]*\.[0-9]*\.[0-9]*"/version = "${{ github.event.inputs.version }}"/' Cargo.toml
+
+      - name: Update version in Cargo.lock
+        run: |
+          sed -i '/^name = "move-win-vd"$/{n; s/^version = "[0-9]*\.[0-9]*\.[0-9]*"/version = "${{ github.event.inputs.version }}"/}' Cargo.lock
+
+      - name: Commit and tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Cargo.toml Cargo.lock
+          git commit -m "chore: bump version to v${{ github.event.inputs.version }}"
+          git tag "v${{ github.event.inputs.version }}"
+          git push
+          git push --tags
+
+  build-and-release:
+    needs: bump-version
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: v${{ github.event.inputs.version }}
+
+      - name: Build
+        run: cargo build --release
+
+      - name: Create GitHub Release (draft)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+          name: v${{ github.event.inputs.version }}
+          draft: true
+          files: target/release/move-win-vd.exe
