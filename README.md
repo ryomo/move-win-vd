@@ -42,6 +42,9 @@ The most convenient way to use this tool is to bind it to keyboard shortcuts via
 - Use the full path to `move-win-vd.exe` in the Keyboard Manager configuration (e.g. `C:\Tools\move-win-vd.exe`).
 - Add `/w` if you want wrap-around behavior at the edges.
 - If you only want to move the window without switching desktops yourself, omit `/s`.
+- First run is slow? Register it in startup to cache and speed up.
+  1. Right-click `move-win-vd.exe` and create a shortcut
+  2. Win+R → `shell:startup` -> paste the shortcut
 
 <br>
 
